@@ -1,0 +1,229 @@
+sudo su - root
+sudo yum update
+sudo yum install
+sudo yum install curl
+sudo yum install wget
+ 
+sudo vi .bashrc
+source .bashrc
+
+Login to EC2 using centos user
+then change to root using the following command:
+sudo su - root
+
+Then run the following two commands:
+ssh-keygen -t rsa -P ""
+cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+
+Following two commands are not required in EC2:
+ssh-copy-id -i $HOME/.ssh/id_rsa.pub centos@localhost
+chmod 700 ~/.ssh/* 
+
+Then download and install all the below softwares using root only.
+-------------------------------------------------------------------------------------
+Java 8:
+sudo wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u40-b25/jdk-8u40-linux-x64.tar.gz"
+sudo tar xzf jdk-8u40-linux-x64.tar.gz
+
+-------------------------------------------------------------------------------------
+Scala 2.10.4:
+http://www.scala-lang.org/download/2.10.4.html
+http://www.scala-lang.org/download/install.html
+http://scala-lang.org/documentation/getting-started.html?_ga=1.16600182.1508178764.1458219077#your_first_lines_of_code
+sudo wget http://www.scala-lang.org/files/archive/scala-2.10.4.tgz
+sudo tar xzf scala-2.10.4.tgz
+
+-------------------------------------------------------------------------------------
+Spark 1.5.2: 
+http://spark.apache.org/downloads.html
+sudo wget http://a.mbbsindia.com/spark/spark-1.5.2/spark-1.5.2-bin-hadoop2.6.tgz
+sudo tar xzf spark-1.5.2-bin-hadoop2.6.tgz
+
+-------------------------------------------------------------------------------------
+Cassandra 3.0.0: https://downloads.datastax.com/community/datastax-community-64bit_3.0.0.msi
+https://docs.datastax.com/en/cassandra/2.0/cassandra/install/installTarball_t.html
+
+curl -L http://downloads.datastax.com/community/dsc-cassandra-2.2.1-bin.tar.gz | tar xz
+
+-------------------------------------------------------------------------------------
+Kafka 0.9:
+sudo wget http://mirror.fibergrid.in/apache/kafka/0.9.0.1/kafka_2.10-0.9.0.1.tgz
+sudo tar xvf kafka_2.10-0.9.0.1.tgz
+
+Start Zookeeper:
+bin/zookeeper-server-start.sh config/zookeeper.properties &
+Start KafkaServer:
+bin/kafka-server-start.sh config/server.properties &
+
+Create a topic::
+/home/centos/kafka_2.10-0.9.0.1/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic demotest
+
+/home/centos/kafka_2.10-0.9.0.1/bin/kafka-list-topic.sh --zookeeper localhost:2181
+
+Send some messages::
+/home/centos/kafka_2.10-0.9.0.1/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic demotest
+
+Start a consumer::
+/home/centos/kafka_2.10-0.9.0.1/bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic demotest --from-beginning
+
+-------------------------------------------------------------------------------------
+Hadoop 2.6:
+
+1. wget http://apache.claz.org/hadoop/common/hadoop-2.6.0/hadoop-2.6.0.tar.gz
+( http://www.unixmen.com/setup-apache-hadoop-centos/ , http://ubuntuforums.org/showthread.php?t=1932058 ,  )
+tar xzf hadoop-2.6.0.tar.gz
+
+2. edit /etc/hosts and add the following based on your hostname (type hostname) and then add:
+
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+10.220.11.171  ip-10-220-11-171.wipro.com
+#10.220.11.171  localhost
+
+3. Create the following directory if not exists:
+/home/centos/hadoop-2.6.0/hadoopdata/hdfs/namenode
+/home/centos/hadoop-2.6.0/hadoopdata/hdfs/datanode
+/home/centos/hadoop-2.6.0/logs
+
+4. 
+In /home/centos/hadoop-2.6.0/etc/hadoop-env.sh, edit java home as :
+export JAVA_HOME=/home/centos/jdk1.8.0_40
+
+In /home/centos/hadoop-2.6.0/etc/core-site.xml add the following under configuration tag:
+<property>
+  <name>fs.default.name</name>
+    <value>hdfs://127.0.0.1:9000</value>
+</property>
+
+In /home/centos/hadoop-2.6.0/etc/hdfs-site.xml add the following under configuration tag:
+<property>
+ <name>dfs.replication</name>
+ <value>1</value>
+</property>
+
+<property>
+  <name>dfs.name.dir</name>
+    <value>file:///home/centos/hadoop-2.6.0/hadoopdata/hdfs/namenode</value>
+</property>
+
+<property>
+  <name>dfs.data.dir</name>
+    <value>file:///home/centos/hadoop-2.6.0/hadoopdata/hdfs/datanode</value>
+</property>
+
+In /home/centos/hadoop-2.6.0/etc/mapred-site.xml add the following under configuration tag:
+<property>
+  <name>mapreduce.framework.name</name>
+   <value>yarn</value>
+ </property>
+ 
+In /home/centos/hadoop-2.6.0/etc/yarn-site.xml add the following under configuration tag:
+<name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+ </property>
+
+5. run this command
+hdfs namenode -format
+
+6. Start all the hadoop services by running the following sh file from /home/centos/hadoop-2.6.0/sbin/start-all.sh
+-------------------------------------------------------------------------------------
+sudo vi .bashrc
+
+export JAVA_HOME=/home/centos/jdk1.8.0_40
+export SCALA_HOME=/home/centos/scala-2.10.4
+export SPARK_HOME=/home/centos/spark-1.5.2-bin-hadoop2.6
+export CASSANDRA_HOME=/home/centos/dsc-cassandra-2.2.1
+export KAFKA_HOME=/home/centos/kafka_2.10-0.9.0.1
+export HADOOP_HOME=/home/centos/hadoop-2.6.0
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$JAVA_HOME/bin:$SCALA_HOME/bin:$KAFKA_HOME/bin:$SPARK_HOME/bin:$CASSANDRA_HOME/bin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH
+export CLASSPATH=$CLASSPATH:/home/centos/requiredjars/*
+
+source .bashrc
+-------------------------------------------------------------------------------------
+
+object HelloWorld {
+    def main(args: Array[String]): Unit = {
+    println("Hello, world!")
+    }
+}
+
+defined module HelloWorld
+
+mvn -DskipTests clean package
+
+E:\project\fujitsu-poc\target\fujitsu-poc-1.0-SNAPSHOT.jar
+
+Required Jars path: https://s3-us-west-2.amazonaws.com/poc-code-backup/dependency-jars.7z
+
+To run Spark:
+
+spark-submit --class com.examples.CassandraPrint --jars E:\project\requiredjars\scala-library-2.10.4.jar,E:\project\requiredjars\guava-16.0.1.jar,E:\project\requiredjars\jsr166e-1.1.0.jar,E:\project\requiredjars\cassandra-driver-core-3.0.0-alpha4.jar,E:\project\requiredjars\spark-cassandra-connector_2.10-1.5.0-M3.jar --master local[2] E:\project\fujitsu-poc\target\fujitsu-poc-1.0-SNAPSHOT.jar
+
+spark-submit --class com.examples.CassandraPrint --jars /home/centos/requiredjars/scala-library-2.10.4.jar,/home/centos/requiredjars/guava-16.0.1.jar,/home/centos/requiredjars/jsr166e-1.1.0.jar,/home/centos/requiredjars/cassandra-driver-core-3.0.0-alpha4.jar,/home/centos/requiredjars/spark-cassandra-connector_2.10-1.5.0-M3.jar --master local[2] /home/centos/fujitsu-poc-1.0-SNAPSHOT.jar
+
+Kafka Jars: /opt/DPM/lib/kafka-clients-0.9.0.2.3.4.0-3485.jar,/opt/DPM/lib/metrics-core-2.2.0.jar,/opt/DPM/lib/spark-streaming-kafka_2.10-1.5.2.jar,/opt/DPM/lib/kafka_2.10-0.8.2.0.jar,/opt/DPM/lib/zkclient-0.7.jar,/opt/DPM/lib/scala-library.jar
+
+To run Spark and Kafka:
+
+Producer:
+
+spark-submit --class com.wipro.KafkaProducerPipeSeparator --jars /home/centos/requiredjars/scala-library-2.10.4.jar,/home/centos/requiredjars/guava-16.0.1.jar,/home/centos/requiredjars/jsr166e-1.1.0.jar,/home/centos/requiredjars/cassandra-driver-core-3.0.0-alpha4.jar,/home/centos/requiredjars/spark-cassandra-connector_2.10-1.5.0-M3.jar,/home/centos/requiredjars/kafka-clients-0.8.2.1.jar,/home/centos/requiredjars/metrics-core-2.2.0.jar,/home/centos/requiredjars/spark-streaming-kafka_2.10-1.5.2.jar,/home/centos/requiredjars/kafka_2.10-0.8.2.1.jar,/home/centos/requiredjars/zkclient-0.3.jar --master local[2] /home/centos/fujitsu-poc-1.0-SNAPSHOT.jar
+
+Consumer:
+
+spark-submit --class com.wipro.KafkaConsumerPipeSeparatorHDFS --jars /home/centos/requiredjars/scala-library-2.10.4.jar,/home/centos/requiredjars/guava-16.0.1.jar,/home/centos/requiredjars/jsr166e-1.1.0.jar,/home/centos/requiredjars/cassandra-driver-core-3.0.0-alpha4.jar,/home/centos/requiredjars/spark-cassandra-connector_2.10-1.5.0-M3.jar,/home/centos/requiredjars/kafka-clients-0.8.2.1.jar,/home/centos/requiredjars/metrics-core-2.2.0.jar,/home/centos/requiredjars/spark-streaming-kafka_2.10-1.5.2.jar,/home/centos/requiredjars/kafka_2.10-0.8.2.1.jar,/home/centos/requiredjars/zkclient-0.3.jar --master local[2] /home/centos/fujitsu-poc-1.0-SNAPSHOT.jar
+
+spark-submit --class com.wipro.KafkaConsumerPipeSeparatorCassandra --jars /home/centos/requiredjars/scala-library-2.10.4.jar,/home/centos/requiredjars/guava-16.0.1.jar,/home/centos/requiredjars/jsr166e-1.1.0.jar,/home/centos/requiredjars/cassandra-driver-core-3.0.0-alpha4.jar,/home/centos/requiredjars/spark-cassandra-connector_2.10-1.5.0-M3.jar,/home/centos/requiredjars/kafka-clients-0.8.2.1.jar,/home/centos/requiredjars/metrics-core-2.2.0.jar,/home/centos/requiredjars/spark-streaming-kafka_2.10-1.5.2.jar,/home/centos/requiredjars/kafka_2.10-0.8.2.1.jar,/home/centos/requiredjars/zkclient-0.3.jar --master local[2] /home/centos/fujitsu-poc-1.0-SNAPSHOT.jar
+
+CREATE KEYSPACE cassandrademo WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
+use cassandrademo;
+
+drop table employee;
+
+CREATE TABLE employee (empid int, empname text, PRIMARY KEY (empid));
+
+INSERT INTO employee(empid,empname) VALUES (268988,'venkat');
+INSERT INTO employee(empid,empname) VALUES (123456,'raju');
+
+INSERT INTO employee(empid,empname) VALUES (330021,null);
+INSERT INTO employee(empid,empname) VALUES (330022,'');
+
+select * from employee;
+
+drop table employee;
+CREATE TABLE employee (id int, name text, salary int, PRIMARY KEY ((id, name), salary));
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat', 100);
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat', 200);
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat', 300);
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat', 100);
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat1', 100);
+
+select * from employee;
+
+ id     | name    | salary
+--------+---------+--------
+ 268988 |  venkat |    100
+ 268988 |  venkat |    200
+ 268988 |  venkat |    300
+ 268988 | venkat1 |    100
+
+drop table employee;
+CREATE TABLE employee (id int, name text, salary int, PRIMARY KEY (id));
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat', 100);
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat', 200);
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat', 300);
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat', 100);
+INSERT INTO employee(id,name, salary) VALUES (268988,'venkat1', 100);
+
+select * from employee;
+
+ id     | name   | salary
+--------+--------+--------
+ 268988 | venkat1 |    100
